@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureSign - Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/login.css' %}">
+</head>
+<body>
+    <div class="container">
+        <!-- Left Panel - Branding & Info -->
+        <div class="left-panel">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-signature"></i></div>
+                <div class="logo-text">SecureSign</div>
+            </div>
+            
+            <h1>Welcome Back to Secure Digital Signature Management</h1>
+            <p>Sign in to access your digital signatures, manage documents, and continue your secure workflow.</p>
+            
+            <div class="features">
+                <div class="feature">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Secure access to all your signed documents</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-history"></i>
+                    <span>View complete audit trail and history</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-folder-open"></i>
+                    <span>Access your document templates and workflows</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-users"></i>
+                    <span>Manage team members and permissions</span>
+                </div>
+            </div>
+            
+            <div class="signature-preview">
+                <h3>Your last signature activity:</h3>
+                <div class="signature-sample">Contract_NDA_2024.pdf</div>
+                <p><small>Signed 2 days ago • Legally binding</small></p>
+            </div>
+        </div>
+        
+        <!-- Right Panel - Login Form -->
+        <div class="right-panel">
+            <div class="form-container">
+                <div class="form-header">
+                    <h2>Sign In to Your Account</h2>
+                    <p>Enter your credentials to access the digital signature platform</p>
+                    
+                    {% if request.user.is_authenticated %}
+                    <div class="welcome-back">Welcome back, {{ request.user.first_name|default:request.user.username }}!</div>
+                    <div class="last-login">
+                        <i class="fas fa-clock"></i>
+                        Last login: {{ request.user.last_login|date:"F j, Y, g:i a"|default:"First time login" }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Login Form -->
+                <form id="login-form" method="POST" action="{% url 'login' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ next|default:'/' }}">
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="input-group">
+                        <label for="username">Email or Username *</label>
+                        <input type="text" 
+                               id="username" 
+                               name="username" 
+                               placeholder="Enter your email or username" 
+                               required
+                               value="{{ form.username.value|default:'' }}"
+                               autocomplete="username">
+                        {% if form.username.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i> {{ form.username.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="password">Password *</label>
+                        <input type="password" 
+                               id="password" 
+                               name="password" 
+                               placeholder="Enter your password" 
+                               required
+                               autocomplete="current-password">
+                        <span class="password-toggle" id="toggle-password">
+                            <i class="far fa-eye"></i>
+                        </span>
+                        {% if form.password.errors %}
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-circle"></i> {{ form.password.errors.0 }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="remember-forgot">
+                        <div class="remember-me">
+                            <input type="checkbox" id="remember" name="remember">
+                            <label for="remember">Remember me for 30 days</label>
+                        </div>
+                        <a href="#" class="forgot-password">Forgot Password?</a>
+                    </div>
+                    
+                    <button type="submit" class="btn">
+                        <i class="fas fa-sign-in-alt"></i> Sign In
+                    </button>
+                </form>
+                
+                <!-- Two-Factor Authentication Section -->
+                <div class="two-factor">
+                    <h4>Enhanced Security Options</h4>
+                    <div class="two-factor-options">
+                        <div class="two-factor-btn">
+                            <i class="fas fa-mobile-alt"></i> SMS
+                        </div>
+                        <div class="two-factor-btn">
+                            <i class="fas fa-envelope"></i> Email
+                        </div>
+                        <div class="two-factor-btn active">
+                            <i class="fas fa-key"></i> Authenticator
+                        </div>
+                    </div>
+                    <p class="security-note">
+                        <i class="fas fa-info-circle"></i>
+                        Two-factor authentication is recommended for accessing sensitive documents.
+                    </p>
+                </div>
+                
+                <div class="divider">
+                    <span>Or sign in with</span>
+                </div>
+                
+                <div class="social-login">
+                    <a href="#" class="social-btn">
+                        <i class="fab fa-google"></i> Google
+                    </a>
+                    <a href="#" class="social-btn">
+                        <i class="fab fa-microsoft"></i> Microsoft
+                    </a>
+                    <a href="#" class="social-btn">
+                        <i class="fab fa-apple"></i> Apple
+                    </a>
+                </div>
+                
+                <div class="login-options">
+                    <p>Don't have a SecureSign account?</p>
+                    <a href="{% url 'register' %}" class="btn" style="background: linear-gradient(to right, #28a745, #20c997);">
+                        <i class="fas fa-user-plus"></i> Create Free Account
+                    </a>
+                </div>
+                
+                <div class="security-note">
+                    <i class="fas fa-lock"></i>
+                    <span>Your session is secured with TLS 1.3 encryption. Automatic logout after 30 minutes of inactivity.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Django Messages -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <script src="{% static 'js/login.js' %}"></script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DigiSigner - Digital Signature Management{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}Secure digital signature platform for businesses and individuals. Sign documents online with legal validity.{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}digital signature, e-signature, sign documents online, electronic signature, legal documents{% endblock %}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="#">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    {% load static %}
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    {% block extra_css %}{% endblock %}
+    
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <!-- Logo -->
+            <a href="#" class="logo">
+                <div class="logo-icon"><i class="fas fa-signature"></i></div>
+                <div class="logo-text">SignDigi</div>
+            </a>
+
+            <!-- Mobile Menu Button -->
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <!-- Navigation Menu -->
+            <nav class="nav-menu" id="navMenu">
+                <div class="nav-item">
+                    <a href="#" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                        Home
+                    </a>
+                </div>
+                
+                <div class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle {% if request.resolver_match.url_name == 'pricing' %}active{% endif %}">
+                        Pricing
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="#" class="dropdown-item">Personal</a>
+                        <a href="#" class="dropdown-item">Business</a>
+                        <a href="#" class="dropdown-item">Enterprise</a>
+                        <a href="#" class="dropdown-item">API Pricing</a>
+                    </div>
+                </div>
+                
+                <div class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle {% if 'tutorials' in request.path %}active{% endif %}">
+                        Tutorials
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="#" class="dropdown-item">Getting Started</a>
+                        <a href="#" class="dropdown-item">Learning Center</a>
+                        <a href="#" class="dropdown-item">Documentation</a>
+                        <a href="#" class="dropdown-item">Support Center</a>
+                    </div>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="#" class="nav-link {% if 'api' in request.path %}active{% endif %}">
+                        API
+                    </a>
+                </div>
+
+                <!-- Authentication Buttons -->
+                <div class="auth-buttons">
+                    {% if user.is_authenticated %}
+                        <div class="user-menu" id="userMenu">
+                            <div class="user-avatar">
+                                {{ user.first_name|slice:"0:1"|default:user.username|slice:"0:1"|upper }}
+                            </div>
+                            <div class="user-dropdown">
+                                <div class="user-info">
+                                    <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+                                    <div class="user-email">{{ user.email }}</div>
+                                </div>
+                                <a href="{% url 'dashboard' %}" class="user-dropdown-item">
+                                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                                </a>
+                                <a href="#" class="user-dropdown-item">
+                                    <i class="fas fa-user"></i> My Profile
+                                </a>
+                                <a href="#" class="user-dropdown-item">
+                                    <i class="fas fa-file-contract"></i> My Documents
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="user-dropdown-item">
+                                        <i class="fas fa-sign-out-alt"></i> Logout
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn-outline">Login</a>
+                        <a href="{% url 'register' %}" class="btn-primary">Sign Up Free</a>
+                    {% endif %}
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="content-container">
+            {% block content %}
+            <!-- Page content will be inserted here -->
+            {% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-grid">
+                <!-- Company Column -->
+                <div class="footer-column">
+                    <h3>Company</h3>
+                    <ul class="footer-links">
+                        <li><a href="#"><i class="fas fa-building"></i> About Us</a></li>
+                        <li><a href="#"><i class="fas fa-briefcase"></i> Careers</a></li>
+                        <li><a href="#"><i class="fas fa-envelope"></i> Contact Us</a></li>
+                        <li><a href="#"><i class="fas fa-blog"></i> Blog</a></li>
+                        <li><a href="#"><i class="fas fa-newspaper"></i> Press</a></li>
+                    </ul>
+                </div>
+
+                <!-- Documentation Column -->
+                <div class="footer-column">
+                    <h3>Documentation</h3>
+                    <ul class="footer-links">
+                        <li><a href="#"><i class="fas fa-book"></i> Documentation</a></li>
+                        <li><a href="#"><i class="fas fa-code"></i> API Reference</a></li>
+                        <li><a href="#"><i class="fas fa-graduation-cap"></i> Tutorials</a></li>
+                        <li><a href="#"><i class="fas fa-university"></i> Learning Center</a></li>
+                        <li><a href="#"><i class="fas fa-question-circle"></i> Support Center</a></li>
+                    </ul>
+                </div>
+
+                <!-- Legal Column -->
+                <div class="footer-column">
+                    <h3>Legal</h3>
+                    <ul class="footer-links">
+                        <li><a href="#"><i class="fas fa-file-contract"></i> Terms of Service</a></li>
+                        <li><a href="#"><i class="fas fa-shield-alt"></i> Privacy Policy</a></li>
+                        <li><a href="#"><i class="fas fa-cookie-bite"></i> Cookie Policy</a></li>
+                        <li><a href="#"><i class="fas fa-user-shield"></i> GDPR Compliance</a></li>
+                        <li><a href="#"><i class="fas fa-balance-scale"></i> Legal</a></li>
+                    </ul>
+                </div>
+
+                
+            </div>
+
+            <div class="footer-bottom">
+                <div class="copyright">
+                    <p>© 2010-2026, DigSigner. All Rights Reserved</p>
+                    <div class="contact-info">
+                        <p><i class="fas fa-envelope"></i> Email: <a href="mailto:contact@digisigner.com">contact@digisigner.com</a></p>
+                        <p><i class="fas fa-map-marker-alt"></i> Address: 700 N Valley St Suite B Anaheim, CA 92801</p>
+                    </div>
+                </div>
+                
+                <div class="social-links">
+                    <a href="https://twitter.com/digisigner" class="social-link" target="_blank" rel="noopener">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="https://facebook.com/digisigner" class="social-link" target="_blank" rel="noopener">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="https://linkedin.com/company/digisigner" class="social-link" target="_blank" rel="noopener">
+                        <i class="fab fa-linkedin-in"></i>
+                    </a>
+                    <a href="https://github.com/digisigner" class="social-link" target="_blank" rel="noopener">
+                        <i class="fab fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Django Messages -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+            <button class="close-message" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- JavaScript Files -->
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

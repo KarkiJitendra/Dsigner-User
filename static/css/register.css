@@ -1,0 +1,59 @@
+/* registration.css - Registration-specific styles */
+
+/* Form Tabs */
+.form-tabs {
+    display: flex;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #eee;
+}
+
+.tab {
+    flex: 1;
+    text-align: center;
+    padding: 15px 10px;
+    font-weight: 600;
+    cursor: pointer;
+    color: #777;
+    transition: all 0.3s;
+    border-bottom: 3px solid transparent;
+}
+
+.tab.active {
+    color: #1e3c72;
+    border-bottom: 3px solid #1e3c72;
+}
+
+.form-content {
+    display: none;
+}
+
+.form-content.active {
+    display: block;
+}
+
+/* Terms Agreement */
+.terms {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 25px;
+}
+
+.terms input {
+    margin-top: 5px;
+    margin-right: 10px;
+}
+
+.terms label {
+    font-size: 14px;
+    color: #555;
+    line-height: 1.5;
+}
+
+.terms a {
+    color: #1e3c72;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* Remember me and forgot password specific to login will be in login.css */
+/* This file now only contains registration-specific styles */

@@ -1,0 +1,214 @@
+{% extends 'users/base.html' %} {% load static %} {% block title %}Preview: {{
+document.title }} - DigiSigner{% endblock %} {% block extra_css %}
+<style>
+  .preview-container {
+    max-width: 1000px;
+    margin: 20px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+  .preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    border-bottom: 1px solid #edf2f7;
+    padding-bottom: 15px;
+  }
+  .pdf-viewer-wrapper {
+    position: relative;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #f7fafc;
+    min-height: 600px;
+  }
+  #pdf-canvas-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+  }
+  .page-wrapper {
+    position: relative;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background: white;
+  }
+  .signature-overlay {
+    position: absolute;
+    border: 2px dashed transparent;
+    cursor: pointer;
+    z-index: 100;
+    transition: all 0.2s;
+    background: rgba(49, 130, 206, 0.05);
+  }
+  .signature-overlay:hover {
+    border-color: #3182ce;
+    background: rgba(49, 130, 206, 0.15);
+  }
+  .signature-badge {
+    position: absolute;
+    top: -25px;
+    left: 0;
+    background: #3182ce;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+  }
+  .signature-overlay:hover .signature-badge {
+    opacity: 1;
+  }
+  .controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .btn-back {
+    color: #4a5568;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+  .btn-back:hover {
+    color: #2d3748;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="preview-container">
+  <div class="preview-header">
+    <div>
+      <a href="{% url 'dashboard' %}" class="btn-back">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
+      <h2 style="margin: 10px 0 0 0; color: #2d3748">{{ document.title }}</h2>
+    </div>
+    <div class="controls">
+      <span id="page-count" style="color: #718096; font-size: 14px"
+        >Loading document...</span
+      >
+      <a
+        href="{% url 'download_document' document.id %}?type=signed"
+        class="btn-primary"
+        style="
+          padding: 8px 16px;
+          font-size: 14px;
+          text-decoration: none;
+          border-radius: 6px;
+        "
+      >
+        <i class="fas fa-download"></i> Download
+      </a>
+    </div>
+  </div>
+
+  <div class="pdf-viewer-wrapper">
+    <div id="pdf-canvas-container">
+      <!-- Pages will be rendered here -->
+    </div>
+  </div>
+</div>
+
+{% include 'users/partials/signature_info_modal.html' %} {% endblock %}
+{% block extra_js %}
+<!-- PDF.js library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  const url = '{{ file_url }}';
+  const positions = JSON.parse('{{ positions|escapejs }}');
+  const documentId = {{ document.id }};
+
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+  let pdfDoc = null;
+
+  async function renderPage(pageNum) {
+      const page = await pdfDoc.getPage(pageNum);
+      const viewport = page.getViewport({ scale: 1.5 });
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'page-wrapper';
+      wrapper.style.width = viewport.width + 'px';
+      wrapper.style.height = viewport.height + 'px';
+      wrapper.id = `page-${pageNum}`;
+
+      const canvas = document.createElement('canvas');
+      wrapper.appendChild(canvas);
+      document.getElementById('pdf-canvas-container').appendChild(wrapper);
+
+      const context = canvas.getContext('2d');
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      const renderContext = {
+          canvasContext: context,
+          viewport: viewport
+      };
+      await page.render(renderContext).promise;
+
+      // Add signature overlays for this page
+      const pageSignatures = positions.filter(p => p.page === pageNum);
+      pageSignatures.forEach(sig => {
+          const overlay = document.createElement('div');
+          overlay.className = 'signature-overlay';
+
+          const [x1, y1, x2, y2] = sig.rect;
+          const width = (x2 - x1) * viewport.scale;
+          const height = (y2 - y1) * viewport.scale;
+
+          const topLeft = viewport.convertToViewportPoint(x1, y2);
+
+          overlay.style.left = topLeft[0] + 'px';
+          overlay.style.top = topLeft[1] + 'px';
+          overlay.style.width = width + 'px';
+          overlay.style.height = height + 'px';
+
+          overlay.innerHTML = '<span class="signature-badge"><i class="fas fa-certificate"></i> Digital Signature</span>';
+          overlay.title = "Click to view signature details";
+
+          overlay.onclick = () => openInfoModal(documentId);
+
+          wrapper.appendChild(overlay);
+      });
+  }
+
+  async function loadPDF() {
+      try {
+          if (!url) {
+            throw new Error("File URL is empty");
+          }
+          pdfDoc = await pdfjsLib.getDocument(url).promise;
+          document.getElementById('page-count').textContent = `Total Pages: ${pdfDoc.numPages}`;
+
+          for (let i = 1; i <= pdfDoc.numPages; i++) {
+              await renderPage(i);
+          }
+      } catch (error) {
+          console.error('Error loading PDF:', error);
+          let errorMsg = error.message || "Unknown error";
+          if (error.name === "MissingPDFException") {
+             errorMsg = "PDF file not found at: " + url;
+          }
+          document.getElementById('pdf-canvas-container').innerHTML =
+              `<div style="padding: 50px; color: #e53e3e; text-align: center;">
+                  <i class="fas fa-exclamation-circle fa-2x mb-3"></i>
+                  <p>Error loading document.</p>
+                  <p style="font-size: 12px; color: #718096; margin-top: 10px;">${errorMsg}</p>
+               </div>`;
+      }
+  }
+
+  loadPDF();
+</script>
+{% endblock %}

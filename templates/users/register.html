@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureSign - Digital Signature Management</title>
+    {% load static %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/register.css' %}">
+</head>
+<body>
+    <div class="container">
+        <!-- Left Panel - Branding & Info -->
+        <div class="left-panel">
+            <div class="logo">
+                <div class="logo-icon"><i class="fas fa-signature"></i></div>
+                <div class="logo-text">SecureSign</div>
+            </div>
+            
+            <h1>Secure Digital Signature Management System</h1>
+            <p>Register for a free account to create, manage, and authenticate digital signatures with enterprise-grade security.</p>
+            
+            <div class="features">
+                <div class="feature">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Military-grade encryption for all signatures</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-file-contract"></i>
+                    <span>Legally binding signatures worldwide</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-history"></i>
+                    <span>Complete audit trail for all documents</span>
+                </div>
+                <div class="feature">
+                    <i class="fas fa-bolt"></i>
+                    <span>Sign documents in under 60 seconds</span>
+                </div>
+            </div>
+            
+            <div class="signature-preview">
+                <h3>Your digital signature will look like this:</h3>
+                <div class="signature-sample">John A. Smith</div>
+                <p><small>Encrypted and timestamped for verification</small></p>
+            </div>
+        </div>
+        
+        <!-- Right Panel - Registration Form -->
+        <div class="right-panel">
+            <div class="form-container">
+                <div class="form-header">
+                    <h2>Create Your Account</h2>
+                    <p>Register to start using our digital signature management system</p>
+                </div>
+                
+                <div class="form-tabs">
+                    <div class="tab active" data-tab="personal">Personal Account</div>
+                </div>
+                
+                <!-- Personal Account Form -->
+                <form id="personal-form" class="form-content active" method="POST" action="{% url 'register' %}">
+                    {% csrf_token %}
+
+                    <div class="input-group">
+                        <label for="{{ form.username.id_for_label }}">Full Name *</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}<span class="error">{{ form.username.errors }}</span>{% endif %}
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="{{ form.email.id_for_label }}">Email Address *</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}<span class="error">{{ form.email.errors }}</span>{% endif %}
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="{{ form.conatct.id_for_label }}">Phone Number</label>
+                        {{ form.contact }}
+                        {% if form.contact.errors %}<span class="error">{{ form.contact.errors }}</span>{% endif %}
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="{{ form.password.id_for_label }}">Password *</label>
+                        {{ form.password }}
+                        <span class="password-toggle" id="toggle-password">
+                            <i class="far fa-eye"></i>
+                        </span>
+                        <div class="password-strength">
+                            <div class="password-strength-bar" id="password-strength-bar"></div>
+                        </div>
+                        {% if form.password.errors %}<span class="error">{{ form.password.errors }}</span>{% endif %}
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="{{ form.confirm_password.id_for_label }}">Confirm Password *</label>
+                        {{ form.confirm_password }}
+                        {% if form.confirm_password.errors %}<span class="error">{{ form.confirm_password.errors }}</span>{% endif %}
+                    </div>
+                    
+                    <div class="terms">
+                        {{ form.terms }}
+                        <label for="{{ form.terms.id_for_label }}">
+                            I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>. 
+                            I understand that my digital signature will be legally binding.
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn">
+                        <i class="fas fa-user-plus"></i> Create Personal Account
+                    </button>
+                </form>
+                
+                <div class="security-note">
+                    <i class="fas fa-lock"></i>
+                    <span>Your data is secured with AES-256 encryption. We never store your signature in plain text.</span>
+                </div>
+                
+                <div class="login-link">
+                    Already have an account? <a href="{% url 'login' %}">Sign In</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Django Messages -->
+    {% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <script src="{% static 'js/register.js' %}"></script>
+</body>
+</html>

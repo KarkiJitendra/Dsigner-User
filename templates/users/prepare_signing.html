@@ -1,0 +1,845 @@
+{% extends 'users/base.html' %} {% load static %} {% block title %}Sign: {{
+document.title }} - DigiSigner{% endblock %} {% block extra_css %}
+<style>
+  .preview-container {
+    max-width: 1400px;
+    margin: 20px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+  .preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    border-bottom: 1px solid #edf2f7;
+    padding-bottom: 15px;
+  }
+  .editor-layout {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+  }
+  .pdf-container {
+    flex: 3;
+    background: #525659;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    min-height: 800px;
+    max-height: 100vh;
+    overflow-y: auto;
+    position: relative;
+  }
+  .tools-panel {
+    flex: 1;
+    min-width: 300px;
+    background: #f8fafc;
+    border: 1px solid #edf2f7;
+    border-radius: 8px;
+    padding: 25px;
+    position: sticky;
+    top: 20px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .page-wrapper {
+    position: relative;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    background: white;
+    margin-bottom: 20px;
+  }
+  .section-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .form-group {
+    margin-bottom: 20px;
+  }
+  .form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #4a5568;
+    margin-bottom: 8px;
+  }
+  .radio-group {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+  }
+  .radio-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    background: white;
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    flex: 1;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .radio-option:hover {
+    border-color: #3182ce;
+  }
+  .radio-option input:checked + span {
+    color: #3182ce;
+    font-weight: 600;
+  }
+  .radio-option.selected {
+    border-color: #3182ce;
+    background-color: #ebf8ff;
+  }
+  .control-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+  .control-input:focus {
+    border-color: #3182ce;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+  }
+  .signature-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+  }
+  .signature-item {
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: white;
+    transition: all 0.2s;
+  }
+  .signature-item:hover {
+    border-color: #cbd5e0;
+  }
+  .signature-item.selected {
+    border-color: #3182ce;
+    box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.2);
+  }
+  .signature-item img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  .drawing-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100;
+    cursor: crosshair;
+    display: none; /* Hidden by default */
+  }
+  .signature-box {
+    position: absolute;
+    border: 2px solid #3182ce;
+    background: rgba(49, 130, 206, 0.1);
+    z-index: 101;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2c5282;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .box-controls {
+    position: absolute;
+    top: -25px;
+    right: 0;
+    background: #2d3748;
+    color: white;
+    border-radius: 4px;
+    display: flex;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  .box-btn {
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    border-left: 1px solid #4a5568;
+    transition: background 0.2s;
+  }
+  .box-btn:first-child {
+    border-left: none;
+  }
+  .box-btn:hover {
+    background: #4a5568;
+  }
+  .box-btn.danger:hover {
+    background: #e53e3e;
+  }
+
+  .btn-start-session {
+    width: 100%;
+    padding: 12px;
+    background: #3182ce;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 20px;
+  }
+  .btn-start-session:hover {
+    background: #2b6cb0;
+  }
+  .btn-start-session:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
+  }
+  .mode-indicator {
+    background: #ebf8ff;
+    color: #2c5282;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border: 1px solid #bee3f8;
+    display: none;
+    align-items: center;
+    gap: 10px;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="preview-container">
+  <div class="preview-header">
+    <div>
+      <a
+        href="{% url 'dashboard' %}"
+        class="btn-back"
+        style="text-decoration: none; color: #4a5568"
+      >
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
+      <h2 style="margin: 10px 0 0 0; color: #2d3748">{{ document.title }}</h2>
+    </div>
+  </div>
+
+  <div class="editor-layout">
+    <!-- Tools Panel -->
+    <div class="tools-panel">
+      <form
+        id="signForm"
+        method="post"
+        enctype="multipart/form-data"
+        action="{% url 'sign_document' document.id %}"
+      >
+        {% csrf_token %}
+        <!-- Hidden Inputs for Coordinates -->
+        <input type="hidden" name="x1" id="input_x1" />
+        <input type="hidden" name="y1" id="input_y1" />
+        <input type="hidden" name="x2" id="input_x2" />
+        <input type="hidden" name="y2" id="input_y2" />
+        <input type="hidden" name="page" id="input_page" />
+        <input type="hidden" name="box_width" id="input_width" />
+        <input type="hidden" name="box_height" id="input_height" />
+
+        <div class="section-title">1. Signing Configuration</div>
+
+        <!-- Signing Method -->
+        <div class="form-group">
+          <label class="form-label">Signing Method</label>
+          <div class="radio-group">
+            <label class="radio-option selected" id="opt-sign">
+              <input
+                type="radio"
+                name="sign_method"
+                value="sign"
+                checked
+                hidden
+              />
+              <i class="fas fa-pen-nib"></i>
+              <span>Digital Sign</span>
+            </label>
+            <label class="radio-option" id="opt-stamp">
+              <input type="radio" name="sign_method" value="stamp" hidden />
+              <i class="fas fa-stamp"></i>
+              <span>Stamp</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Stamp Options (Conditional) -->
+        <div id="stamp-options" style="display: none">
+          <div class="form-group">
+            <label class="form-label">Stamp Source</label>
+            <div class="radio-group">
+              <label class="radio-option selected" id="opt-upload">
+                <input
+                  type="radio"
+                  name="stamp_source"
+                  value="upload"
+                  checked
+                  hidden
+                />
+                <i class="fas fa-upload"></i>
+                <span>Upload</span>
+              </label>
+              <label class="radio-option" id="opt-existing">
+                <input
+                  type="radio"
+                  name="stamp_source"
+                  value="existing"
+                  hidden
+                />
+                <i class="fas fa-history"></i>
+                <span>Previous</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- File Upload -->
+          <div id="stamp-upload-container" class="form-group">
+            <label class="form-label">Upload Stamp Image</label>
+            <input
+              type="file"
+              name="stamp_file"
+              class="control-input"
+              accept="image/*"
+            />
+            <small style="color: #718096; display: block; margin-top: 5px"
+              >Supported: PNG, JPG, JPEG (Transparent background
+              recommended)</small
+            >
+          </div>
+
+          <!-- Existing Signatures -->
+          <div
+            id="stamp-existing-container"
+            class="form-group"
+            style="display: none"
+          >
+            <label class="form-label">Select Saved Stamp</label>
+            <div class="signature-grid">
+              {% for sig in signatures %} {% if sig.image %}
+              <div
+                class="signature-item"
+                onclick="selectSignature(this, '{{ sig.id }}')"
+              >
+                <img src="{{ sig.image.url }}" alt="Signature" />
+              </div>
+              {% endif %} {% empty %}
+              <div
+                style="
+                  grid-column: span 2;
+                  text-align: center;
+                  color: #718096;
+                  padding: 10px;
+                "
+              >
+                No saved signatures found.
+              </div>
+              {% endfor %}
+            </div>
+            <input
+              type="hidden"
+              name="selected_signature_id"
+              id="input_sig_id"
+            />
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top: 30px">
+          2. Page Selection
+        </div>
+        <div class="form-group">
+          <label class="form-label">Pages to Sign</label>
+          <input
+            type="text"
+            name="page_numbers"
+            id="page_numbers"
+            class="control-input"
+            placeholder="e.g. 1, 3, 5-7"
+            value="1"
+          />
+          <small style="color: #718096; display: block; margin-top: 5px"
+            >Enter page numbers separated by commas or ranges.</small
+          >
+        </div>
+
+        <div class="section-title" style="margin-top: 30px">3. Placement</div>
+
+        <div id="mode-message" class="mode-indicator">
+          <i class="fas fa-mouse-pointer"></i>
+          <span
+            ><strong>Drawing Mode:</strong> Click and drag on the document to
+            place your signature.</span
+          >
+        </div>
+
+        <button type="button" id="btn-start-session" class="btn-start-session">
+          <i class="fas fa-crosshairs"></i> Set Placement
+        </button>
+
+        <button
+          type="submit"
+          id="btn-submit"
+          class="btn-primary"
+          style="width: 100%; margin-top: 15px; padding: 12px; display: none"
+        >
+          <i class="fas fa-file-signature"></i> Finalize & Sign
+        </button>
+
+        <button
+          type="button"
+          id="btn-cancel-placement"
+          class="btn-back"
+          style="
+            width: 100%;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+          "
+        >
+          Cancel
+        </button>
+      </form>
+    </div>
+
+    <!-- PDF Viewer -->
+    <div class="pdf-container" id="pdf-container">
+      <!-- Pages rendered here -->
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+  const url = "{{ file_url }}" || "/media/documents/test.pdf";
+  let pdfDoc = null;
+  const scale = 1.2;
+
+  // -- State --
+  let isDrawingMode = false;
+  let currentBox = null;
+  let activePageWrapper = null;
+  let placedBoxData = null; // { x1, y1, x2, y2, page, width, height }
+
+  // Drawing State (for creating new boxes)
+  let isCreatingBox = false;
+  let createStartX = 0;
+  let createStartY = 0;
+
+  // Drag State (for moving existing boxes)
+  let isDragging = false;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let initialBoxLeft = 0;
+  let initialBoxTop = 0;
+
+  // UI Elements
+  const signMethodRadios = document.getElementsByName("sign_method");
+  const stampSourceRadios = document.getElementsByName("stamp_source");
+  const btnStartSession = document.getElementById("btn-start-session");
+  const btnSubmit = document.getElementById("btn-submit");
+  const btnCancel = document.getElementById("btn-cancel-placement");
+  const modeMessage = document.getElementById("mode-message");
+
+  // --- Initialization --- //
+
+  function initUI() {
+    // Handling Radio Buttons Styling
+    document.querySelectorAll(".radio-option").forEach((option) => {
+      option.addEventListener("click", () => {
+        const radio = option.querySelector('input[type="radio"]');
+        radio.checked = true;
+
+        // Update styles for the group
+        const name = radio.name;
+        document.querySelectorAll(`input[name="${name}"]`).forEach((r) => {
+          r.parentElement.classList.remove("selected");
+        });
+        option.classList.add("selected");
+
+        // Trigger logic
+        if (name === "sign_method") toggleSignMethod();
+        if (name === "stamp_source") toggleStampSource();
+      });
+    });
+
+    btnStartSession.addEventListener("click", startDrawingMode);
+    btnCancel.addEventListener("click", resetPlacement);
+
+    // Global drag events
+    document.addEventListener("mousemove", handleGlobalMouseMove);
+    document.addEventListener("mouseup", handleGlobalMouseUp);
+  }
+
+  function toggleSignMethod() {
+    const isStamp =
+      document.querySelector('input[name="sign_method"]:checked').value ===
+      "stamp";
+    document.getElementById("stamp-options").style.display = isStamp
+      ? "block"
+      : "none";
+  }
+
+  function toggleStampSource() {
+    const source = document.querySelector(
+      'input[name="stamp_source"]:checked',
+    ).value;
+    document.getElementById("stamp-upload-container").style.display =
+      source === "upload" ? "block" : "none";
+    document.getElementById("stamp-existing-container").style.display =
+      source === "existing" ? "block" : "none";
+  }
+
+  function selectSignature(element, id) {
+    document
+      .querySelectorAll(".signature-item")
+      .forEach((el) => el.classList.remove("selected"));
+    element.classList.add("selected");
+    document.getElementById("input_sig_id").value = id;
+  }
+
+  // --- PDF Rendering --- //
+  async function renderPage(pageNum) {
+    const page = await pdfDoc.getPage(pageNum);
+    const viewport = page.getViewport({ scale: scale });
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "page-wrapper";
+    wrapper.id = `page-${pageNum}`;
+    wrapper.style.width = viewport.width + "px";
+    wrapper.style.height = viewport.height + "px";
+    wrapper.dataset.pageNum = pageNum;
+
+    // Store viewport for coordinate conversion later
+    wrapper.pdfViewport = viewport;
+
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+
+    // Overlay for drawing/clicking
+    const overlay = document.createElement("div");
+    overlay.className = "drawing-overlay";
+    overlay.id = `overlay-${pageNum}`;
+    // Change cursor to indicate drawing mode
+    overlay.style.cursor = "crosshair";
+
+    wrapper.appendChild(canvas);
+    wrapper.appendChild(overlay);
+    document.getElementById("pdf-container").appendChild(wrapper);
+
+    const renderContext = {
+      canvasContext: context,
+      viewport: viewport,
+    };
+    await page.render(renderContext).promise;
+
+    // Attach events to overlay
+    attachOverlayEvents(overlay, wrapper);
+  }
+
+  async function loadPDF() {
+    try {
+      if (!url) throw new Error("No URL");
+      pdfDoc = await pdfjsLib.getDocument(url).promise;
+      for (let i = 1; i <= pdfDoc.numPages; i++) {
+        await renderPage(i);
+      }
+    } catch (error) {
+      console.error(error);
+      document.getElementById("pdf-container").innerHTML =
+        '<div style="color:red; padding:20px;">Error loading document.</div>';
+    }
+  }
+
+  // --- Placement Logic --- //
+
+  function startDrawingMode() {
+    isDrawingMode = true;
+    document
+      .querySelectorAll(".drawing-overlay")
+      .forEach((el) => (el.style.display = "block"));
+    btnStartSession.style.display = "none";
+
+    // Update message
+    modeMessage.innerHTML =
+      '<i class="fas fa-mouse-pointer"></i><span><strong>Drawing Mode:</strong> Click and drag on the document to create and size your signature box.</span>';
+    modeMessage.style.display = "flex";
+    btnCancel.style.display = "block";
+  }
+
+  function stopDrawingMode() {
+    isDrawingMode = false;
+    document
+      .querySelectorAll(".drawing-overlay")
+      .forEach((el) => (el.style.display = "none"));
+  }
+
+  function attachOverlayEvents(overlay, wrapper) {
+    overlay.addEventListener("mousedown", (e) => {
+      if (!isDrawingMode) return;
+      if (currentBox) {
+        // If we already have a box, remove it to place new one
+        resetPlacement(false);
+      }
+
+      const rect = wrapper.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      // Start creating a new box
+      isCreatingBox = true;
+      createStartX = clickX;
+      createStartY = clickY;
+      activePageWrapper = wrapper;
+
+      // Create the box at the starting point with minimal size
+      createBox(clickX, clickY, 1, 1, wrapper);
+
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
+    overlay.addEventListener("mousemove", (e) => {
+      if (!isCreatingBox || !currentBox) return;
+
+      const rect = wrapper.getBoundingClientRect();
+      const currentX = e.clientX - rect.left;
+      const currentY = e.clientY - rect.top;
+
+      // Calculate the box dimensions based on drag
+      const width = Math.abs(currentX - createStartX);
+      const height = Math.abs(currentY - createStartY);
+
+      // Determine top-left corner (in case user drags up or left)
+      const left = Math.min(createStartX, currentX);
+      const top = Math.min(createStartY, currentY);
+
+      // Update box position and size
+      currentBox.style.left = left + "px";
+      currentBox.style.top = top + "px";
+      currentBox.style.width = width + "px";
+      currentBox.style.height = height + "px";
+
+      e.preventDefault();
+    });
+
+    overlay.addEventListener("mouseup", (e) => {
+      if (!isCreatingBox) return;
+
+      isCreatingBox = false;
+
+      // Ensure minimum size
+      const minWidth = 50;
+      const minHeight = 30;
+      const currentWidth = parseFloat(currentBox.style.width);
+      const currentHeight = parseFloat(currentBox.style.height);
+
+      if (currentWidth < minWidth || currentHeight < minHeight) {
+        // Box is too small, reset
+        alert(
+          "Signature box is too small. Please drag to create a larger area.",
+        );
+        resetPlacement(true);
+        return;
+      }
+
+      // Finalize the box
+      finalizeBox();
+
+      e.preventDefault();
+      e.stopPropagation();
+    });
+  }
+
+  function createBox(x, y, w, h, wrapper) {
+    currentBox = document.createElement("div");
+    currentBox.className = "signature-box";
+    currentBox.style.left = x + "px";
+    currentBox.style.top = y + "px";
+    currentBox.style.width = w + "px";
+    currentBox.style.height = h + "px";
+    currentBox.innerHTML =
+      '<i class="fas fa-expand-arrows-alt" style="margin-right:5px"></i> Drag to size';
+
+    wrapper.appendChild(currentBox);
+    activePageWrapper = wrapper;
+  }
+
+  function finalizeBox() {
+    if (!currentBox || !activePageWrapper) return;
+
+    // Change cursor to move
+    currentBox.style.cursor = "move";
+
+    // Clear existing content
+    currentBox.innerHTML = "";
+
+    // Add controls
+    const controls = document.createElement("div");
+    controls.className = "box-controls";
+    controls.innerHTML = `
+          <div class="box-btn danger" onclick="resetPlacement(true); event.stopPropagation();"><i class="fas fa-times"></i></div>
+      `;
+    currentBox.appendChild(controls);
+
+    // Add text content
+    const textNode = document.createElement("span");
+    textNode.innerHTML =
+      '<i class="fas fa-check" style="margin-right:5px"></i> Placed';
+    currentBox.appendChild(textNode);
+
+    // Enable Dragging on the box for repositioning
+    currentBox.addEventListener("mousedown", handleBoxMouseDown);
+
+    // Stop "Drawing Mode" (hides overlays) so we can interact with the box directly
+    stopDrawingMode();
+
+    // Update UI buttons
+    modeMessage.style.display = "none";
+    btnStartSession.style.display = "none";
+    btnSubmit.style.display = "block";
+    btnCancel.style.display = "block";
+
+    // Calculate initial coordinates
+    updateCoordinates();
+  }
+
+  // --- Drag Logic --- //
+
+  function handleBoxMouseDown(e) {
+    if (!currentBox) return;
+    isDragging = true;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    initialBoxLeft = parseFloat(currentBox.style.left || 0);
+    initialBoxTop = parseFloat(currentBox.style.top || 0);
+    e.stopPropagation(); // Prevent propagation
+    e.preventDefault();
+  }
+
+  function handleGlobalMouseMove(e) {
+    if (!isDragging || !currentBox || !activePageWrapper) return;
+    e.preventDefault();
+
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+
+    let newLeft = initialBoxLeft + dx;
+    let newTop = initialBoxTop + dy;
+
+    // Boundary Checks
+    const wrapperRect = activePageWrapper.getBoundingClientRect();
+
+    // Use offsetWidth/Height for box size
+    const boxW = currentBox.offsetWidth;
+    const boxH = currentBox.offsetHeight;
+    const maxLeft = wrapperRect.width - boxW;
+    const maxTop = wrapperRect.height - boxH;
+
+    if (newLeft < 0) newLeft = 0;
+    if (newTop < 0) newTop = 0;
+    if (newLeft > maxLeft) newLeft = maxLeft;
+    if (newTop > maxTop) newTop = maxTop;
+
+    currentBox.style.left = newLeft + "px";
+    currentBox.style.top = newTop + "px";
+  }
+
+  function handleGlobalMouseUp(e) {
+    if (isDragging) {
+      isDragging = false;
+      updateCoordinates();
+    }
+  }
+
+  function updateCoordinates() {
+    if (!currentBox || !activePageWrapper) return;
+
+    const viewport = activePageWrapper.pdfViewport;
+
+    const cssLeft = parseFloat(currentBox.style.left);
+    const cssTop = parseFloat(currentBox.style.top);
+    const cssWidth = parseFloat(currentBox.style.width);
+    const cssHeight = parseFloat(currentBox.style.height);
+
+    // Convert to PDF coordinates (bottom-left origin)
+    // viewport.convertToPdfPoint takes (x, y) where y is from top.
+    const [x1, y1] = viewport.convertToPdfPoint(cssLeft, cssTop + cssHeight);
+    const [x2, y2] = viewport.convertToPdfPoint(cssLeft + cssWidth, cssTop);
+
+    placedBoxData = {
+      page: activePageWrapper.dataset.pageNum,
+      x1: x1,
+      y1: y1,
+      x2: x2,
+      y2: y2,
+      width: x2 - x1,
+      height: y2 - y1,
+    };
+
+    updateForm(placedBoxData);
+  }
+
+  function resetPlacement(resetUI = true) {
+    if (currentBox) {
+      currentBox.remove();
+      currentBox = null;
+    }
+    placedBoxData = null;
+    activePageWrapper = null;
+
+    // Stop any drag
+    isDragging = false;
+
+    if (resetUI) {
+      btnStartSession.style.display = "block";
+      btnSubmit.style.display = "none";
+      btnCancel.style.display = "none";
+      modeMessage.style.display = "none";
+      // Clear inputs
+      document.getElementById("input_x1").value = "";
+      document.getElementById("input_y1").value = "";
+      document.getElementById("input_x2").value = "";
+      document.getElementById("input_y2").value = "";
+      document.getElementById("input_page").value = "";
+    }
+  }
+
+  function updateForm(data) {
+    document.getElementById("input_page").value = data.page;
+    document.getElementById("input_x1").value = data.x1.toFixed(2);
+    document.getElementById("input_y1").value = data.y1.toFixed(2);
+    document.getElementById("input_x2").value = data.x2.toFixed(2);
+    document.getElementById("input_y2").value = data.y2.toFixed(2);
+  }
+
+  // Start
+  initUI();
+  loadPDF();
+</script>
+{% endblock %}

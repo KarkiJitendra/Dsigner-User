@@ -1,0 +1,740 @@
+{% extends 'users/base.html' %} {% load static %} {% block title %}Signature
+Management - DigiSigner{% endblock %} {% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}" />
+<link rel="stylesheet" href="{% static 'css/base.css' %}" />
+<style>
+  .ms-3 {
+    margin-left: 1rem;
+  }
+  .text-success {
+    color: #28a745 !important;
+  }
+  .text-danger {
+    color: #dc3545 !important;
+  }
+  .mb-4 {
+    margin-bottom: 1.5rem !important;
+  }
+  .mt-4 {
+    margin-top: 1.5rem !important;
+  }
+  .mt-3 {
+    margin-top: 1rem !important;
+  }
+
+  /* Subscription section */
+  .subscription-form {
+    border: 1px solid #dbe7ff;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #f8fbff 0%, #ffffff 75%);
+    padding: 24px;
+  }
+  .subscription-intro {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: #eef4ff;
+    color: #2d3748;
+    margin-bottom: 20px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .subscription-intro i {
+    color: #2b6cb0;
+    margin-top: 2px;
+  }
+  .subscription-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+  }
+  .subscription-field {
+    margin-bottom: 0;
+  }
+  .subscription-field label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2d3748;
+  }
+  .subscription-form input,
+  .subscription-form select,
+  .subscription-form textarea {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #ffffff;
+  }
+  .subscription-form input:focus,
+  .subscription-form select:focus,
+  .subscription-form textarea:focus {
+    outline: none;
+    border-color: #2b6cb0;
+    box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.12);
+  }
+  .subscription-help {
+    margin-top: 6px;
+    color: #718096;
+    font-size: 12px;
+  }
+  .subscription-error-list {
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #fed7d7;
+    background: #fff5f5;
+    color: #c53030;
+    font-size: 13px;
+  }
+  .subscription-error {
+    margin-top: 6px;
+    color: #c53030;
+    font-size: 12px;
+  }
+  .subscription-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .subscription-cancel {
+    color: #4a5568;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .subscription-cancel:hover {
+    color: #2b6cb0;
+    text-decoration: underline;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="management-container">
+  <!-- Sidebar -->
+  <aside class="management-sidebar">
+    <ul class="sidebar-nav">
+      <li class="sidebar-nav-item">
+        <a
+          href="?section=setup"
+          class="sidebar-nav-link {% if active_section == 'setup' %}active{% endif %}"
+        >
+          <i class="fas fa-certificate"></i> Certificate Setup
+        </a>
+      </li>
+      <li class="sidebar-nav-item">
+        <a
+          href="?section=documents"
+          class="sidebar-nav-link {% if active_section == 'documents' or not active_section %}active{% endif %}"
+        >
+          <i class="fas fa-file-alt"></i> My Documents
+        </a>
+      </li>
+      <li class="sidebar-nav-item">
+        <a
+          href="?section=verify"
+          class="sidebar-nav-link {% if active_section == 'verify' %}active{% endif %}"
+        >
+          <i class="fas fa-check-circle"></i> Verify Documents
+        </a>
+      </li>
+      <li class="sidebar-nav-item">
+        <a
+          href="?section=upload"
+          class="sidebar-nav-link {% if active_section == 'upload' %}active{% endif %}"
+        >
+          <i class="fas fa-file-upload"></i> Upload Document
+        </a>
+      </li>
+      <li class="sidebar-nav-item">
+        <a
+          href="?section=send"
+          class="sidebar-nav-link {% if active_section == 'send' %}active{% endif %}"
+        >
+          <i class="fas fa-paper-plane"></i> Subscription
+        </a>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="management-content">
+    <!-- Section: Certificate Setup -->
+    {% if active_section == 'setup' %}
+    <section id="setup-section">
+      <h2 class="section-title">
+        <i class="fas fa-certificate"></i> Digital Certificate Setup
+      </h2>
+      <div class="management-card">
+        <p class="mb-4">
+          Upload your Api Token to enable advanced digital signing capabilities.
+        </p>
+        <form
+          action="{% url 'upload_token' %}"
+          method="post"
+          enctype="multipart/form-data"
+        >
+          {% csrf_token %}
+          <div class="form-group">{{ token_form.as_p }}</div>
+
+          <button type="submit" class="btn-submit mt-3">
+            <i class="fas fa-upload"></i> Save Token
+          </button>
+        </form>
+      </div>
+
+      {% if user_cert %}
+      <div class="management-card mt-4" style="border-top: 4px solid #28a745">
+        <h3 class="card-title text-success">
+          <i class="fas fa-check-double"></i> Current Status
+        </h3>
+        <div class="row" style="display: flex">
+          <div class="col-md-6" style="flex: 1">
+            <p>
+              <strong>PB7 File:</strong> {% if user_cert.pb7_file %}
+              <span class="text-success">Uploaded</span> {% else %}
+              <span class="text-danger">Missing</span> {% endif %}
+            </p>
+          </div>
+          <div class="col-md-6" style="flex: 1">
+            <p>
+              <strong>PB12 File:</strong> {% if user_cert.pb12_file %}
+              <span class="text-success">Uploaded</span> {% else %}
+              <span class="text-danger">Missing</span> {% endif %} |
+              <strong>Passphrase:</strong> {% if user_cert.passphrase %}
+              <span class="text-success">Set</span> {% else %}
+              <span class="text-danger">Not Set</span> {% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <!-- Section: My Documents -->
+    {% if active_section == 'documents' or not active_section %}
+    <section id="documents-section">
+      <h2 class="section-title">
+        <i class="fas fa-file-alt"></i> My Documents
+      </h2>
+      <div class="management-card">
+        <div class="table-container">
+          <table class="management-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for doc in documents %}
+              <tr>
+                <td>{{ doc.title }}</td>
+                <td>{{ doc.created_at|date:"M d, Y" }}</td>
+                <td>
+                  <span class="status-badge status-{{ doc.status }}"
+                    >{{ doc.get_status_display }}</span
+                  >
+                </td>
+                <td>
+                  <a
+                    href="{% url 'prepare_sign' doc.id %}"
+                    class="btn-action btn-verify"
+                    title="View/Sign"
+                    style="
+                      background-color: #4c51bf;
+                      color: white;
+                      padding: 5px 10px;
+                      text-decoration: none;
+                      border-radius: 4px;
+                      font-size: 12px;
+                    "
+                  >
+                    <i class="fas fa-signature"></i> Sign
+                  </a>
+                  {% if doc.status == 'signed' or doc.status == 'verified' %}
+                  <a
+                    href="{% url 'document_preview' doc.id %}"
+                    class="btn-action"
+                    title="View Document"
+                    style="
+                      background-color: #3182ce;
+                      color: white;
+                      padding: 5px 10px;
+                      text-decoration: none;
+                      border-radius: 4px;
+                      font-size: 12px;
+                      margin-left: 5px;
+                    "
+                  >
+                    <i class="fas fa-eye"></i> View
+                  </a>
+                  <a
+                    href="javascript:void(0)"
+                    onclick="openInfoModal({{ doc.id }})"
+                    class="btn-action"
+                    title="Signature Info"
+                    style="
+                      background-color: #38a169;
+                      color: white;
+                      padding: 5px 10px;
+                      text-decoration: none;
+                      border-radius: 4px;
+                      font-size: 12px;
+                      margin-left: 5px;
+                    "
+                  >
+                    <i class="fas fa-info-circle"></i> Info
+                  </a>
+                  {% endif %} {% if doc.status != 'verified' %}
+                  <form
+                    action="{% url 'verify_document' doc.id %}"
+                    method="post"
+                    style="display: inline"
+                  >
+                    {% csrf_token %}
+                    <button
+                      type="submit"
+                      class="btn-action btn-verify"
+                      title="Verify"
+                      style="border: none; cursor: pointer"
+                    >
+                      <i class="fas fa-check"></i>
+                    </button>
+                  </form>
+                  {% endif %}
+                  <a
+                    href="?section=send&doc_id={{ doc.id }}"
+                    class="btn-action btn-send"
+                    title="Send"
+                  >
+                    <i class="fas fa-paper-plane"></i>
+                  </a>
+                  <a
+                    href="{% url 'download_document' doc.id %}?type={% if doc.status == 'signed' or doc.status == 'verified' %}signed{% else %}original{% endif %}"
+                    class="btn-action btn-download"
+                    title="Download"
+                    style="
+                      background-color: #2d3748;
+                      color: white;
+                      padding: 5px 10px;
+                      text-decoration: none;
+                      border-radius: 4px;
+                      font-size: 12px;
+                      margin-left: 5px;
+                    "
+                  >
+                    <i class="fas fa-download"></i>
+                  </a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td
+                  colspan="4"
+                  class="text-center py-5"
+                  style="text-align: center; padding: 50px 0"
+                >
+                  <i
+                    class="fas fa-folder-open fa-3x text-muted mb-3 d-block"
+                    style="
+                      font-size: 3rem;
+                      color: #cbd5e0;
+                      display: block;
+                      margin-bottom: 15px;
+                    "
+                  ></i>
+                  No documents found.
+                  <a
+                    href="?section=upload"
+                    style="color: #2b6cb0; text-decoration: underline"
+                    >Upload one now</a
+                  >.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if documents.has_other_pages %}
+        <div class="pagination">
+          {% if documents.has_previous %}
+          <a
+            href="?page={{ documents.previous_page_number }}&section=documents"
+            class="page-link"
+            >&laquo; Previous</a
+          >
+          {% endif %} {% for i in documents.paginator.page_range %} {% if documents.number == i %}
+          <a href="#" class="page-link active">{{ i }}</a>
+          {% else %}
+          <a href="?page={{ i }}&section=documents" class="page-link"
+            >{{ i }}</a
+          >
+          {% endif %} {% endfor %} {% if documents.has_next %}
+          <a
+            href="?page={{ documents.next_page_number }}&section=documents"
+            class="page-link"
+            >Next &raquo;</a
+          >
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- Section: Verify -->
+    {% if active_section == 'verify' %}
+    <section id="verify-section">
+      <h2 class="section-title">
+        <i class="fas fa-check-circle"></i> Document Verification
+      </h2>
+      <div class="management-card">
+        <p class="mb-4">
+          Select a document from your list to verify its integrity and digital
+          signature.
+        </p>
+        <div class="table-container">
+          <table class="management-table">
+            <thead>
+              <tr>
+                <th>Document</th>
+                <th>Current Status</th>
+                <th>Verification Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for doc in documents %}
+              <tr>
+                <td>{{ doc.title }}</td>
+                <td>
+                  <span class="status-badge status-{{ doc.status }}"
+                    >{{ doc.get_status_display }}</span
+                  >
+                </td>
+                <td>
+                  <form
+                    action="{% url 'verify_document' doc.id %}"
+                    method="post"
+                    style="display: inline"
+                  >
+                    {% csrf_token %}
+                    <button
+                      type="submit"
+                      class="btn-submit py-1 px-3"
+                      style="font-size: 13px; padding: 5px 15px"
+                    >
+                      Verify Integrity
+                    </button>
+                  </form>
+                  {% if doc.status == 'verified' %}
+                  <a
+                    href="{% url 'document_preview' doc.id %}"
+                    class="btn-submit py-1 px-3 ms-2"
+                    style="
+                      font-size: 13px;
+                      padding: 5px 15px;
+                      background-color: #3182ce;
+                      text-decoration: none;
+                    "
+                  >
+                    View
+                  </a>
+                  <a
+                    href="{% url 'download_document' doc.id %}?type=signed"
+                    class="btn-submit py-1 px-3 ms-2"
+                    style="
+                      font-size: 13px;
+                      padding: 5px 15px;
+                      background-color: #2d3748;
+                      text-decoration: none;
+                    "
+                  >
+                    Download
+                  </a>
+                  <a
+                    href="javascript:void(0)"
+                    onclick="openInfoModal({{ doc.id }})"
+                    class="btn-action ms-2"
+                    style="
+                      background-color: #38a169;
+                      color: white;
+                      padding: 6px 15px;
+                      text-decoration: none;
+                      border-radius: 4px;
+                      font-size: 13px;
+                      display: inline-block;
+                      vertical-align: middle;
+                    "
+                  >
+                    <i class="fas fa-info-circle"></i> Info
+                  </a>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- Section: Upload -->
+    {% if active_section == 'upload' %}
+    <section id="upload-section">
+      <h2 class="section-title">
+        <i class="fas fa-file-upload"></i> Upload New Document
+      </h2>
+      <div class="management-card">
+        <p class="mb-4">
+          Select a PDF or document file to upload for digital signing or
+          verification.
+        </p>
+        <form
+          action="{% url 'upload_document' %}"
+          method="post"
+          enctype="multipart/form-data"
+        >
+          {% csrf_token %}
+          <div class="form-group mb-3">
+            <label class="form-label">Document Title</label>
+            {{ upload_form.title }}
+          </div>
+          <div class="form-group mb-4">
+            <label class="form-label">Select File</label>
+            {{ upload_form.file }}
+          </div>
+          <button type="submit" class="btn-submit">
+            <i class="fas fa-cloud-upload-alt"></i> Upload Document
+          </button>
+          <a
+            href="?section=documents"
+            class="ms-3 text-muted"
+            style="text-decoration: none; margin-left: 15px"
+            >Cancel</a
+          >
+        </form>
+      </div>
+    </section>
+    {% endif %}
+
+    <!-- Section: Send -->
+    {% if active_section == 'send' %}
+    <section id="send-section">
+      <h2 class="section-title">
+        <i class="fas fa-paper-plane"></i> Subscription
+      </h2>
+      <div class="management-card">
+        <form action="{% url 'subscription' %}" method="post">
+          {% csrf_token %}
+          <div class="subscription-form">
+            <div class="subscription-intro">
+              <i class="fas fa-info-circle"></i>
+              <span
+                >Complete your subscription details below. All required fields
+                must be filled before submitting.</span
+              >
+            </div>
+
+            {% if subscription_form.non_field_errors %}
+            <div class="subscription-error-list">
+              {{ subscription_form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <div class="subscription-grid">
+              {% for field in subscription_form %}
+              <div class="form-group subscription-field">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }} {% if field.help_text %}
+                <div class="subscription-help">{{ field.help_text }}</div>
+                {% endif %} {% for error in field.errors %}
+                <div class="subscription-error">{{ error }}</div>
+                {% endfor %}
+              </div>
+              {% endfor %}
+            </div>
+
+            <div class="subscription-actions">
+              <button type="submit" class="btn-submit">
+                <i class="fas fa-save"></i> Submit
+              </button>
+              <a href="?section=documents" class="subscription-cancel"
+                >Cancel</a
+              >
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+    {% endif %}
+  </main>
+</div>
+
+<!-- Custom Signature Placement Modal -->
+<div
+  id="placementModal"
+  class="modal"
+  style="
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+  "
+>
+  <div
+    class="modal-content"
+    style="
+      background: white;
+      margin: 10% auto;
+      padding: 20px;
+      width: 400px;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    "
+  >
+    <h3 style="margin-top: 0">
+      <i class="fas fa-signature"></i> Signature Placement
+    </h3>
+    <p style="font-size: 14px; color: #666; margin-bottom: 20px">
+      Specify where you want the signature to appear.
+    </p>
+    <form id="signForm" method="post">
+      {% csrf_token %}
+      <div class="form-group" style="margin-bottom: 15px">
+        <label class="form-label">Page Number</label>
+        <input
+          type="number"
+          name="page"
+          value="1"
+          min="1"
+          class="form-control"
+          style="
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+          "
+        />
+      </div>
+      <div style="display: flex; gap: 10px; margin-bottom: 15px">
+        <div style="flex: 1">
+          <label class="form-label">X1 (Left)</label>
+          <input
+            type="number"
+            name="x1"
+            value="100"
+            class="form-control"
+            style="
+              width: 100%;
+              padding: 8px;
+              border: 1px solid #ddd;
+              border-radius: 4px;
+            "
+          />
+        </div>
+        <div style="flex: 1">
+          <label class="form-label">Y1 (Bottom)</label>
+          <input
+            type="number"
+            name="y1"
+            value="100"
+            class="form-control"
+            style="
+              width: 100%;
+              padding: 8px;
+              border: 1px solid #ddd;
+              border-radius: 4px;
+            "
+          />
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; margin-bottom: 20px">
+        <div style="flex: 1">
+          <label class="form-label">X2 (Right)</label>
+          <input
+            type="number"
+            name="x2"
+            value="200"
+            class="form-control"
+            style="
+              width: 100%;
+              padding: 8px;
+              border: 1px solid #ddd;
+              border-radius: 4px;
+            "
+          />
+        </div>
+        <div style="flex: 1">
+          <label class="form-label">Y2 (Top)</label>
+          <input
+            type="number"
+            name="y2"
+            value="200"
+            class="form-control"
+            style="
+              width: 100%;
+              padding: 8px;
+              border: 1px solid #ddd;
+              border-radius: 4px;
+            "
+          />
+        </div>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 10px">
+        <button
+          type="button"
+          onclick="closePlacementModal()"
+          class="btn-action"
+          style="background: #e2e8f0; color: #4a5568"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          class="btn-submit"
+          style="margin-top: 0; width: auto; padding: 8px 20px"
+        >
+          Sign Now
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% include 'users/partials/signature_info_modal.html' %}
+
+<script>
+  function openPlacementModal(docId) {
+    const modal = document.getElementById("placementModal");
+    const form = document.getElementById("signForm");
+    form.action = `/sign_document/${docId}/`;
+    modal.style.display = "block";
+  }
+
+  function closePlacementModal() {
+    document.getElementById("placementModal").style.display = "none";
+  }
+
+  // Close modals when clicking outside
+  window.addEventListener("click", function (event) {
+    const pModal = document.getElementById("placementModal");
+    if (event.target === pModal) {
+      closePlacementModal();
+    }
+  });
+</script>
+{% endblock %}
